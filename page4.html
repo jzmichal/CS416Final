@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<!-- Load d3.js -->
+<script src="https://d3js.org/d3.v4.js"></script>
+<!-- Load d3-annotation -->
+<script src="https://rawgit.com/susielu/d3-annotation/master/d3-annotation.min.js"></script>
+<!-- Add 2 buttons -->
+<input type="button" name="b1" value="Prev" onclick="location.href='page3.html'">
+<!-- Create a div where the graph will take place -->
+
+<div id="visual4"></div>
+
+<button onclick="update('AverageHighwayMPG')">Max Highway MPG</button>
+<button onclick="update('AverageCityMPG')">Max City MPG</button>
+<button onclick="update('MakeMinMPG')">Minimum MPG</button>
+<button onclick="update('MakeAvgMPG')">Average MPG</button>
+<div style = "position:relative; max-width:1200px; font-size:16px;">
+This bar chart allows us to visualize several variations of the MPG parameter among car companies.
+By toggling the buttons at the bottom of the graph, we can filter between the
+maximum highway and city MPG a car company offers in a model, the minimum MPG (calculated by an
+average of highway and city MPG), and the average MPG a company has among all of
+its models within the dataset. Hovering over the top of a companies bar gives the exact value.
+<br>
+<br>
+From this, we can notice the various strategies car companies take. Some offer
+a variety of models ranging in MPG such as BMW, Chevrolet, Ford, Toyota,
+Kia, Mitsubishi, Mercedes-Benz, and Nissan. Others offer exclusively low MPG models, corresponding
+to higher cylinder engines, generally meaning more luxurious, powerful cars. We can see by
+filtering that this group includes Aston Martin, Bentley, Ferrari, Genesis,
+Lamborghini, Lotus, Maserati, Mclaren Automotive, Rolls-Royce, and Roush Performance.
+Meanwhile, some companies have prioritized fuel efficiency. By toggling between minimum
+MPG and Average MPG companies offer, we can see that Tesla, smart, Fiat, and Hyundai
+fall into this group.
+</div>
+<script>
+
+// set the dimensions and margins of the graph
+var margin = {top: 30, right: 30, bottom: 70, left: 60},
+    width = 1000 - margin.left - margin.right,
+    height = 480 - margin.top - margin.bottom;
+
+// append the svg object to the body of the page
+var svg = d3.select("#visual4")
+  .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+
+// Initialize the X axis
+var x = d3.scaleBand()
+  .range([ 0, width ])
+  .padding(0.2);
+var xAxis = svg.append("g")
+  .attr("transform", "translate(0," + height + ")")
+
+// Initialize the Y axis
+var y = d3.scaleLinear()
+  .range([height, 0]);
+var yAxis = svg.append("g")
+  .attr("class", "myYaxis")
+  svg.append("text")
+  .attr("transform", "rotate(-90)")
+  .attr("y", - margin.left)
+  .attr("x", - height / 2)
+  .attr("dy", "1em")
+  .style("text-anchor", "middle")
+  .text("MPG");
+
+  svg.append("text")
+          .attr("x", (width / 2))
+          .attr("y", 0 - (margin.top / 2))
+          .attr("text-anchor", "middle")
+          .style("font-size", "20px")
+          .style("text-decoration", "underline")
+          .text("MPG vs Make of Car");
+
+  const annotations = [
+    {
+      note: {
+        label: "Tesla is consistently among the leaders regardless of MPG filter. Their annual revenue over the past 12 years? .116 Billion --> 67 Billion",
+        align: "middle",  // try right or left
+        wrap: 300,  // try something smaller to see text split in several lines
+        padding: 0,   // More = text lower
+      },
+      color: ["Navy"],
+      x: 830,
+      y: 150,
+      dy: -70,
+      dx: -200
+    }
+  ]
+
+  // Add annotation to the chart
+  const makeAnnotations = d3.annotation()
+    .annotations(annotations)
+  svg.append("g")
+    .call(makeAnnotations)
+
+// A function that create / update the plot for a given variable:
+function update(selectedVar) {
+
+  // Parse the Data
+  d3.csv('https://raw.githubusercontent.com/jzmichal/CS416Final/main/cars2017.csv', function(data) {
+    console.log(data)
+    // X axis
+    x.domain(data.map(function(d) { return d.Make; }))
+    xAxis.transition().duration(1000).call(d3.axisBottom(x))
+    .selectAll("text")
+    .attr("transform", "translate(-10,0)rotate(-45)")
+    .style("text-anchor", "end");
+
+    // Add Y axis
+    y.domain([0, d3.max(data, function(d) { return +d[selectedVar] }) ]);
+    yAxis.transition().duration(1000).call(d3.axisLeft(y));
+
+    var tooltip = d3.select("#visual4")
+      .append("div")
+      .style("opacity", 0)
+      .attr("class", "tooltip")
+      .style("position", "absolute")
+      .style("background-color", "white")
+      .style("border", "solid")
+      .style("border-width", "1px")
+      .style("border-radius", "5px")
+      .style("padding", "10px")
+
+    var mouseover = function(d) {
+      tooltip
+        .style("opacity", 1)
+    }
+
+    var mousemove = function(d) {
+      tooltip
+        .html(d[selectedVar])
+        .style("left", (d3.mouse(this)[0]+90) + "px") // It is important to put the +90: other wise the tooltip is exactly where the point is an it creates a weird effect
+        .style("top", (d3.mouse(this)[1]) + "px")
+    }
+
+    // A function that change this tooltip when the leaves a point: just need to set opacity to 0 again
+    var mouseleave = function(d) {
+      tooltip
+        .transition()
+        .duration(200)
+        .style("opacity", 0)
+    }
+    // variable u: map data to existing bars
+    var u = svg.selectAll("rect")
+      .data(data)
+
+    // update bars
+    u
+      .enter()
+      .append("rect")
+      .merge(u)
+        .attr("x", function(d) { return x(d.Make); })
+        .attr("y", function(d) { return y(d[selectedVar]); })
+        .attr("width", x.bandwidth())
+        .attr("height", function(d) { return height - y(d[selectedVar]); })
+        .attr("fill", "red")
+        .on("mouseover", mouseover)
+        .on("mousemove", mousemove)
+        .on("mouseleave", mouseleave)
+  })
+
+}
+
+// Initialize plot
+update('AverageHighwayMPG')
+
+</script>

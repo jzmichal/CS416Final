@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<!-- Load d3.js -->
+<script src="https://d3js.org/d3.v4.js"></script>
+<!-- Load d3-annotation -->
+<script src="https://rawgit.com/susielu/d3-annotation/master/d3-annotation.min.js"></script>
+
+<input type="button" name="b1" value="Prev" onclick="location.href='page2.html'">
+<input type="button" name="b2" value="Next" onclick="location.href='page4.html'">
+<!-- Create a div where the graph will take place -->
+<div style = "position:relative; left:700px; max-width:300px; font-size:18px;">
+  From our scatter plot, we can see a clear linear positive correlation between City MPG
+  and Highway MPG. Hovering over each data point allows you to see several relevant variables,
+  including Make, how many cylinders the Engine is, and the type of fuel that the car uses.
+  Additionally, the size of each data point corresponds to how many cylinders the
+  engine is. We can deduce that more cylinders in the engine generally means
+  worse MPG. This is because the cylinder is the power source of an engine, meaning
+  the more cylinders, the more power that the car has potential to exert and thus
+  more fuel required. However, this doesn't apply to electric vehicles because they do not have
+  cylinders.
+<br>
+<br>
+  Notice that electric cars seem to have higher city MPG vs highway, where as it's the opposite
+  for gas-powered cars. This is because electric cars have instant power from their electric motor,
+  allowing for quicker acceleration and less effort required. On the other hand, gas-powered
+  cars require more power for acceleration, resulting in better sustainability at higher speeds.
+  Regardless of these differences, electric cars win in either category in terms of fuel efficiency.
+
+</div>
+<div id="visual3" style = " position:relative; left: 0px; top:-630px;"></div>
+
+<script>
+
+// set the dimensions and margins of the graph
+var margin = {top: 30, right: 30, bottom: 60, left: 60},
+    width = 700 - margin.left - margin.right,
+    height = 680 - margin.top - margin.bottom;
+
+// append the svg object to the body of the page
+var svg = d3.select("#visual3")
+  .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+
+//Read the data
+d3.csv("https://flunky.github.io/cars2017.csv", function(data) {
+
+  svg.append("text")
+          .attr("x", (width / 2))
+          .attr("y", 0 - (margin.top / 2))
+          .attr("text-anchor", "middle")
+          .style("font-size", "20px")
+          .style("text-decoration", "underline")
+          .text("MPG of Different Fuel Types");
+  // Add X axis
+  var x = d3.scaleLog()
+    .domain([10, 150])
+    .range([0, width]);
+  svg.append("g")
+    .attr("transform", "translate(0," + height + ")")
+    .transition().duration(1000)
+    .call(d3.axisBottom(x)
+    .tickValues([10,20,50,100])
+    .tickFormat(d3.format('a')));
+
+  svg.append("text")
+  .attr("transform", "rotate(-90)")
+  .attr("y", - margin.left)
+  .attr("x", - height / 2)
+  .attr("dy", "1em")
+  .style("text-anchor", "middle")
+  .style("font-size", "16px")
+  .text("Average Highway MPG");
+  // Add Y axis
+  var y = d3.scaleLog()
+    .domain([10, 150])
+    .range([height, 0]);
+  svg.append("g")
+    .transition().duration(1000)
+    .call(d3.axisLeft(y)
+    .tickValues([10,20,50,100])
+    .tickFormat(d3.format('a'))
+    );
+  svg.append("text")
+  .attr("text-anchor", "end")
+  .attr("x", width/2 + margin.right)
+  .attr("y", height + margin.bottom / 2)
+  .style("font-size", "16px")
+  .text("Average City MPG");
+
+  // Add a tooltip div. Here I define the general feature of the tooltip: stuff that do not depend on the data point.
+  // Its opacity is set to 0: we don't see it by default.
+  var tooltip = d3.select("#visual3")
+    .append("div")
+    .style("opacity", 0)
+    .attr("class", "tooltip")
+    .style("position", "absolute")
+    .style("background-color", "white")
+    .style("border", "solid")
+    .style("border-width", "1px")
+    .style("border-radius", "5px")
+    .style("padding", "10px")
+
+
+
+  // A function that change this tooltip when the user hover a point.
+  // Its opacity is set to 1: we can now see it. Plus it set the text and position of tooltip depending on the datapoint (d)
+  var mouseover = function(d) {
+    tooltip
+      .style("opacity", 1)
+  }
+
+  var mousemove = function(d) {
+    tooltip
+      .html("Make: " + d.Make +
+            "<br> Fuel: " + d.Fuel +
+            "<br> Cylinders: " + d.EngineCylinders
+      )
+      .style("left", (d3.mouse(this)[0]+90) + "px") // It is important to put the +90: other wise the tooltip is exactly where the point is an it creates a weird effect
+      .style("top", (d3.mouse(this)[1]) + "px")
+  }
+
+  // A function that change this tooltip when the leaves a point: just need to set opacity to 0 again
+  var mouseleave = function(d) {
+    tooltip
+      .transition()
+      .duration(200)
+      .style("opacity", 0)
+  }
+
+  // Add dots
+  svg.append('g')
+    .selectAll("dot")
+    .data(data)
+    .enter()
+    .append("circle")
+      .attr("cx", function (d) { return x(d.AverageCityMPG); } )
+      .attr("cy", function (d) { return y(d.AverageHighwayMPG); } )
+      .attr("r", function(d) { return (5+ Number.parseInt(d.EngineCylinders));})
+      .style("fill", "red")
+      .style("opacity", 0.5)
+      .style("stroke", "white")
+    .on("mouseover", mouseover)
+    .on("mousemove", mousemove)
+    .on("mouseleave", mouseleave)
+
+    const annotations = [
+      {
+        note: {
+          label: "Hover over each data point in this cluster of fuel efficient cars. Notice a similarity in the number of engine cylinders and fuel type?",
+          align: "middle",  // try right or left
+          wrap: 200,  // try something smaller to see text split in several lines
+          padding: 10   // More = text lower
+        },
+        color: ["Navy"],
+        x: 530,
+        y: 120,
+        dy: 150,
+        dx: 0
+      }
+    ]
+
+    // Add annotation to the chart
+    const makeAnnotations = d3.annotation()
+      .annotations(annotations)
+    svg.append("g")
+      .call(makeAnnotations)
+})
+
+</script>
