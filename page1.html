@@ -1,8 +1,5 @@
-<!DOCTYPE html>
-<meta charset="utf-8">
-
-<!-- Load d3.js -->
 <script src="https://d3js.org/d3.v4.js"></script>
+
 <input type="button" name="b2" value="Next" onclick="location.href='page2.html'">
 
 <div id="visual1"></div>
@@ -18,12 +15,10 @@ to consumers might look like.
 </div>
 <script>
 
-// set the dimensions and margins of the graph
 var margin = {top: 30, right: 30, bottom: 80, left: 60},
     width = 1000 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
 
-// append the svg object to the body of the page
 var svg = d3.select("#visual1")
   .append("svg")
     .attr("width", width + margin.left + margin.right)
@@ -32,47 +27,47 @@ var svg = d3.select("#visual1")
     .attr("transform",
           "translate(" + margin.left + "," + margin.top + ")");
 
-//Read the data
 d3.csv("https://raw.githubusercontent.com/jzmichal/CS416Final/main/gasprices.csv", function(data){
 
   svg.append("text")
-          .attr("x", (width / 2))
-          .attr("y", 0 - (margin.top / 2))
-          .attr("text-anchor", "middle")
-          .style("font-size", "20px")
-          .style("text-decoration", "underline")
-          .text("Price of Gasoline Over Past 30 Years");
+    .attr("x", (width / 2))
+    .attr("y", 0 - (margin.top / 2))
+    .attr("text-anchor", "middle")
+    .style("font-size", "20px")
+    .style("text-decoration", "underline")
+    .text("Price of Gasoline from 1992 to 2022");
 
     var x = d3.scaleTime()
       .domain(d3.extent(data, function(d) { return d3.timeParse("%Y")(d.Year) }))
       .range([0, width]);
+
     svg.append("g")
       .attr("transform", "translate(0," + height + ")")
       .call(d3.axisBottom(x));
 
     svg.append("text")
-    .attr("transform", "rotate(-90)")
-    .attr("y", - margin.left)
-    .attr("x", - height / 2)
-    .attr("dy", "1em")
-    .style("font-size", "18px")
-    .style("text-anchor", "middle")
-    .text("Dollars Per Gallon");
+      .attr("transform", "rotate(-90)")
+      .attr("y", - margin.left)
+      .attr("x", - height / 2)
+      .attr("dy", "1em")
+      .style("font-size", "18px")
+      .style("text-anchor", "middle")
+      .text("Dollars Per Gallon");
 
-    // Add Y axis
     var y = d3.scaleLinear()
       .domain([0, 6])
       .range([ height, 0 ]);
+
     svg.append("g")
       .call(d3.axisLeft(y));
 
     svg.append("text")
-    .attr("text-anchor", "end")
-    .attr("x", width/2 + margin.right - 15)
-    .attr("y", height + margin.bottom / 2)
-    .style("font-size", "18px")
-    .text("Year");
-    // Add the line
+      .attr("text-anchor", "end")
+      .attr("x", width/2 + margin.right - 15)
+      .attr("y", height + margin.bottom / 2)
+      .style("font-size", "18px")
+      .text("Year");
+
     svg.append("path")
       .datum(data)
       .attr("fill", "none")
@@ -82,7 +77,5 @@ d3.csv("https://raw.githubusercontent.com/jzmichal/CS416Final/main/gasprices.csv
         .x(function(d) { return x(new Date(d.Year)) })
         .y(function(d) { return y(Number.parseFloat(d.Price)) })
         )
-
 })
-
 </script>

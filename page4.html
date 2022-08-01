@@ -1,12 +1,7 @@
-<!DOCTYPE html>
-<meta charset="utf-8">
-<!-- Load d3.js -->
 <script src="https://d3js.org/d3.v4.js"></script>
-<!-- Load d3-annotation -->
 <script src="https://rawgit.com/susielu/d3-annotation/master/d3-annotation.min.js"></script>
-<!-- Add 2 buttons -->
+
 <input type="button" name="b1" value="Prev" onclick="location.href='page3.html'">
-<!-- Create a div where the graph will take place -->
 
 <div id="visual4"></div>
 
@@ -34,12 +29,10 @@ fall into this group.
 </div>
 <script>
 
-// set the dimensions and margins of the graph
 var margin = {top: 30, right: 30, bottom: 70, left: 60},
     width = 1000 - margin.left - margin.right,
     height = 480 - margin.top - margin.bottom;
 
-// append the svg object to the body of the page
 var svg = d3.select("#visual4")
   .append("svg")
     .attr("width", width + margin.left + margin.right)
@@ -48,14 +41,12 @@ var svg = d3.select("#visual4")
     .attr("transform",
           "translate(" + margin.left + "," + margin.top + ")");
 
-// Initialize the X axis
 var x = d3.scaleBand()
   .range([ 0, width ])
   .padding(0.2);
 var xAxis = svg.append("g")
   .attr("transform", "translate(0," + height + ")")
 
-// Initialize the Y axis
 var y = d3.scaleLinear()
   .range([height, 0]);
 var yAxis = svg.append("g")
@@ -80,9 +71,9 @@ var yAxis = svg.append("g")
     {
       note: {
         label: "Tesla is consistently among the leaders regardless of MPG filter. Their annual revenue over the past 12 years? .116 Billion --> 67 Billion",
-        align: "middle",  // try right or left
-        wrap: 300,  // try something smaller to see text split in several lines
-        padding: 0,   // More = text lower
+        align: "middle",
+        wrap: 300,
+        padding: 0,
       },
       color: ["Navy"],
       x: 830,
@@ -92,27 +83,22 @@ var yAxis = svg.append("g")
     }
   ]
 
-  // Add annotation to the chart
   const makeAnnotations = d3.annotation()
     .annotations(annotations)
   svg.append("g")
     .call(makeAnnotations)
 
-// A function that create / update the plot for a given variable:
-function update(selectedVar) {
+function update(parameter) {
 
-  // Parse the Data
   d3.csv('https://raw.githubusercontent.com/jzmichal/CS416Final/main/cars2017.csv', function(data) {
     console.log(data)
-    // X axis
     x.domain(data.map(function(d) { return d.Make; }))
     xAxis.transition().duration(1000).call(d3.axisBottom(x))
     .selectAll("text")
     .attr("transform", "translate(-10,0)rotate(-45)")
     .style("text-anchor", "end");
 
-    // Add Y axis
-    y.domain([0, d3.max(data, function(d) { return +d[selectedVar] }) ]);
+    y.domain([0, d3.max(data, function(d) { return +d[parameter] }) ]);
     yAxis.transition().duration(1000).call(d3.axisLeft(y));
 
     var tooltip = d3.select("#visual4")
@@ -133,40 +119,35 @@ function update(selectedVar) {
 
     var mousemove = function(d) {
       tooltip
-        .html(d[selectedVar])
-        .style("left", (d3.mouse(this)[0]+90) + "px") // It is important to put the +90: other wise the tooltip is exactly where the point is an it creates a weird effect
+        .html(d[parameter])
+        .style("left", (d3.mouse(this)[0]+90) + "px")
         .style("top", (d3.mouse(this)[1]) + "px")
     }
 
-    // A function that change this tooltip when the leaves a point: just need to set opacity to 0 again
-    var mouseleave = function(d) {
+    var mouseout = function(d) {
       tooltip
         .transition()
         .duration(200)
         .style("opacity", 0)
     }
-    // variable u: map data to existing bars
     var u = svg.selectAll("rect")
       .data(data)
 
-    // update bars
     u
       .enter()
       .append("rect")
       .merge(u)
         .attr("x", function(d) { return x(d.Make); })
-        .attr("y", function(d) { return y(d[selectedVar]); })
+        .attr("y", function(d) { return y(d[parameter]); })
         .attr("width", x.bandwidth())
-        .attr("height", function(d) { return height - y(d[selectedVar]); })
+        .attr("height", function(d) { return height - y(d[parameter]); })
         .attr("fill", "red")
         .on("mouseover", mouseover)
         .on("mousemove", mousemove)
-        .on("mouseleave", mouseleave)
+        .on("mouseout", mouseout)
   })
 
 }
-
-// Initialize plot
 update('AverageHighwayMPG')
 
 </script>
